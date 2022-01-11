@@ -4,9 +4,12 @@ import time
 from typing import Union
 from threading import Thread
 
+import requests
+
 from terrariarun import log
 from terrariarun.common.constants import *
 from terrariarun.common.utils import run_cmd, ProcessHandler
+from terrariarun.controller.config import Config
 
 
 LOG_HANDLE_INTERVAL = 3
@@ -24,13 +27,14 @@ class LogHandler(Thread):
             time.sleep(LOG_HANDLE_INTERVAL)
 
     def _handle(self, out: str):
-        pass
+        print(out)
 
 
 class Controller:
     __instance = None
     _proc_handler: Union[ProcessHandler, None] = None
     _log_handler: Union[LogHandler, None] = None
+    _cfg: Config = None
 
     def __new__(cls):
         if cls.__instance is None:
@@ -39,13 +43,15 @@ class Controller:
         return cls.__instance
 
     def _init(self):
-        pass
+        self._cfg = Config()
 
     def start(self):
         if self._proc_handler or self._log_handler:
             return
+        self.update(force=False)
         self.create_world(force=False)
         self.update_mods(force=False)
+
         self._proc_handler = self._run()
         self._log_handler = LogHandler(self._proc_handler)
         self._log_handler.start()
@@ -60,6 +66,22 @@ class Controller:
         self.stop()
         self.start()
 
+    def update(self, force=True):
+        cur_version = self._get_latest_version()
+        if not force and self._cfg.version == cur_version:
+            return
+        self._cfg.version = cur_version
+        self._cfg.save()
+
+        filename = f'tModLoader.Linux.{self._cfg.version}.tar.gz'
+        url = f'{MOD_DOWNLOAD_URL}/{filename}'
+        for cmd in [
+            f'curl -OL {url} -x {PROXY_URL}',
+            f'tar -xzvf {filename}',
+            f'rm {filename}'
+        ]:
+            run_cmd(cmd, cwd=SERVER_DIR)
+
     @staticmethod
     def update_mods(force=True):
         if not os.path.exists(f'{MOD_CFG_PATH}'):
@@ -73,8 +95,7 @@ class Controller:
             if not force and os.path.exists(mod_path):
                 continue
             log.info(f'begin download mod: mod={mod}')
-            run_cmd(f'curl'
-                    f'-OL https://mirror7.sgkoi.dev/tModLoader/download.php?Down=file/{mod}.tmod')
+            run_cmd(f'curl -OL {MOD_DOWNLOAD_URL}/{mod}.tmod', cwd=MOD_DIR)
 
     def create_world(self, force=True):
         """
@@ -104,20 +125,7 @@ class Controller:
         ]:
             proc_handler.run_cmd(cmd)
 
-    @staticmethod
-    def install():
-        version = 'v0.11.8.5'
-        filename = f'tModLoader.Linux.{version}.tar.gz'
-        url = f'https://github.com/tModLoader/tModLoader/releases/latest/download/{filename}'
-        for cmd in [
-            f'curl -L {url} -o tModLoader.tar.gz -x socks5://127.0.0.1:10808',
-            f'tar -xzvf tModLoader.tar.gz',
-            f'rm tModLoader.tar.gz'
-        ]:
-            run_cmd(cmd, cwd=SERVER_DIR)
-
-    @staticmethod
-    def _run():
+    def _run(self):
         """
 
         Choose World:
@@ -132,10 +140,14 @@ class Controller:
             '',
             '',
             '',
-            '4578'
+            self._cfg.room_passwd
         ]:
             proc_handler.run_cmd(cmd)
         return proc_handler
+
+    @property
+    def _is_world_exists(self):
+        return all(os.path.exists(path) for path in WORLD_FILE_PATHS)
 
     @staticmethod
     def _backup_world():
@@ -145,11 +157,18 @@ class Controller:
         for path in WORLD_FILE_PATHS:
             run_cmd(f'rm {path}')
 
-    @property
-    def _is_world_exists(self):
-        return all(os.path.exists(path) for path in WORLD_FILE_PATHS)
+    @staticmethod
+    def _get_latest_version():
+        proxies = {
+            'http': PROXY_URL,
+            'https': PROXY_URL
+        }
+        resp = requests.get(SERVER_DOWNLOAD_URL, proxies=proxies)
+        version = resp.url.split('/')[-1]
+        return version
 
 
 if __name__ == '__main__':
     ctr = Controller()
-    ctr.create_world()
+    # ctr.create_world()
+    ctr.start()

@@ -170,5 +170,5 @@ class Controller:
 
 if __name__ == '__main__':
     ctr = Controller()
-    # controller.create_world()
+    # agent.create_world()
     ctr.start()

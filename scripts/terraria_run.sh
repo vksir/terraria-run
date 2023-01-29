@@ -34,7 +34,7 @@ Options:
   --install         [ steamcmd || tmodloader]
   --update          [ tmodloader ]
   --start           [ tmodloader ]
-  --install_mod     Prepare ~/neutron-star/terraria-run/install.txt
+  --install-mod     Prepare ~/neutron-star/terraria-run/install.txt
                             ~/neutron-star/terraria-run/enable.json
                             ~/neutron-star/terraria-run/serverconfig.txt
   -h|--help

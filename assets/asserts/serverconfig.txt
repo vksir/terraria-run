@@ -1,0 +1,6 @@
+world=/home/${user}/.local/share/Terraria/tModLoader/Worlds/World.wld
+worldpath=/home/${user}/.local/share/Terraria/tModLoader/Worlds/
+autocreate=3
+worldname=NeutronStar
+difficulty=2
+password=${password}

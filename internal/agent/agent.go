@@ -26,8 +26,8 @@ type Agent struct {
 
 func NewAgent(name string) *Agent {
 	a := Agent{Name: name}
-	a.cmd = exec.Command(constant.DotnetPath(), "tModLoader.dll", "-server", "-config", constant.ServerConfigPath())
-	a.cmd.Dir = filepath.Join(constant.InstallDir(), "tModLoader")
+	a.cmd = exec.Command(constant.DotnetPath, "tModLoader.dll", "-server", "-config", constant.ServerConfigPath)
+	a.cmd.Dir = filepath.Join(constant.InstallDir, "tModLoader")
 	a.ctx, a.stopListenOutput = context.WithCancel(context.Background())
 	return &a
 }
@@ -76,7 +76,7 @@ func (a *Agent) RunCmd(cmd string) (string, error) {
 
 func (a *Agent) listenOutput() error {
 	slog.Info("Begin listen output")
-	w, err := os.OpenFile(constant.TModLoaderLogPath(), os.O_WRONLY|os.O_CREATE, 0640)
+	w, err := os.OpenFile(constant.TModLoaderLogPath, os.O_WRONLY|os.O_CREATE, 0640)
 	if err != nil {
 		return err
 	}

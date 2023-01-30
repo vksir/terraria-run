@@ -13,10 +13,6 @@ func Home() string {
 	return h
 }
 
-func InstallDir() string {
-	return filepath.Join(Home(), "neutron-star", "terraria-run")
-}
-
 func Workspace() string {
 	p := filepath.Join(Home(), ".terraria-run")
 	if _, err := os.Stat(p); os.IsNotExist(err) {
@@ -27,22 +23,10 @@ func Workspace() string {
 	return p
 }
 
-func ServerLogPath() string {
-	return filepath.Join(Workspace(), "server.log")
-}
-
-func DotnetPath() string {
-	return filepath.Join(InstallDir(), "tModLoader/dotnet/6.0.0/dotnet")
-}
-
-func ServerConfigPath() string {
-	return filepath.Join(Workspace(), "serverconfig.txt")
-}
-
-func TModLoaderLogPath() string {
-	return filepath.Join(Workspace(), "tModLoader.log")
-}
-
-func ConfigPath() string {
-	return filepath.Join(Workspace(), "config.json")
-}
+var InstallDir = filepath.Join(Home(), "neutron-star", "terraria-run")
+var ServerLogPath = filepath.Join(Workspace(), "server.log")
+var DotnetPath = filepath.Join(InstallDir, "tModLoader/dotnet/6.0.0/dotnet")
+var ServerConfigPath = filepath.Join(Workspace(), "serverconfig.txt")
+var TModLoaderLogPath = filepath.Join(Workspace(), "tModLoader.log")
+var ConfigPath = filepath.Join(Workspace(), "config.json")
+var WorldDir = filepath.Join(Home(), ".local/share/Terraria/tModLoader/Worlds")

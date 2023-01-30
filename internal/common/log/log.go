@@ -23,7 +23,7 @@ func init() {
 }
 
 func getLogWriter() io.Writer {
-	f, err := os.OpenFile(constant.ServerLogPath(), os.O_WRONLY|os.O_CREATE, 0644)
+	f, err := os.OpenFile(constant.ServerLogPath, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		panic(err)
 	}

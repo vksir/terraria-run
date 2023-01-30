@@ -23,10 +23,10 @@ func init() {
 }
 
 func Read() {
-	if _, err := os.Stat(constant.ConfigPath()); os.IsNotExist(err) {
+	if _, err := os.Stat(constant.ConfigPath); os.IsNotExist(err) {
 		return
 	}
-	r, err := os.Open(constant.ConfigPath())
+	r, err := os.Open(constant.ConfigPath)
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +37,7 @@ func Read() {
 }
 
 func Write() {
-	err := viper.WriteConfigAs(constant.ConfigPath())
+	err := viper.WriteConfigAs(constant.ConfigPath)
 	if err != nil {
 		panic(err)
 	}
@@ -45,8 +45,6 @@ func Write() {
 
 // serverconfig.txt: https://terraria.wiki.gg/wiki/Guide:Setting_up_a_Terraria_server
 func setDefault() {
-	viper.SetDefault("world_name", "NeutronStar")
-	viper.SetDefault("password", "")
 	viper.SetDefault("server_config", map[string]any{
 		"auto_create": SizeLarge,
 		"seed":        "",

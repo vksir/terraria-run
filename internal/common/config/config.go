@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"terraria-run/internal/common/constant"
+	"terraria-run/internal/common/model/model"
 )
 
 const (
@@ -19,7 +20,6 @@ const (
 
 func init() {
 	setDefault()
-	Read()
 }
 
 func Read() {
@@ -43,8 +43,8 @@ func Write() {
 	}
 }
 
-// serverconfig.txt: https://terraria.wiki.gg/wiki/Guide:Setting_up_a_Terraria_server
 func setDefault() {
+	// https://terraria.wiki.gg/wiki/Guide:Setting_up_a_Terraria_server
 	viper.SetDefault("server_config", map[string]any{
 		"auto_create": SizeLarge,
 		"seed":        "",
@@ -53,5 +53,12 @@ func setDefault() {
 		"max_players": 8,
 		"port":        7777,
 		"password":    "",
+	})
+	viper.SetDefault("mod", map[int]model.Mod{
+		2619954303: {
+			ID:     2619954303,
+			Name:   "Recipe Browser",
+			Enable: true,
+		},
 	})
 }

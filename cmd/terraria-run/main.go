@@ -3,6 +3,7 @@ package main
 import (
 	"golang.org/x/exp/slog"
 	"terraria-run/internal/agent"
+	_ "terraria-run/internal/common/config"
 	_ "terraria-run/internal/common/log"
 	"time"
 )

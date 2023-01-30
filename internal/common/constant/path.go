@@ -42,3 +42,7 @@ func ServerConfigPath() string {
 func TModLoaderLogPath() string {
 	return filepath.Join(Workspace(), "tModLoader.log")
 }
+
+func ConfigPath() string {
+	return filepath.Join(Workspace(), "config.json")
+}

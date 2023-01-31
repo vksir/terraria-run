@@ -1,31 +1,31 @@
 package log
 
 import (
-	"golang.org/x/exp/slog"
-	"io"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"os"
-	"path/filepath"
 	"terraria-run/internal/common/constant"
 )
 
 func init() {
-	w := getLogWriter()
-	slog.SetDefault(slog.New(slog.HandlerOptions{
-		AddSource: true,
-		Level:     slog.LevelDebug,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.SourceKey {
-				a.Value = slog.StringValue(filepath.Base(a.Value.String()))
-			}
-			return a
-		},
-	}.NewTextHandler(w)))
+	encoder := getEncoder()
+	writeSyncer := getWriteSyncer()
+	core := zapcore.NewCore(encoder, writeSyncer, zap.DebugLevel)
+	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
+	zap.ReplaceGlobals(logger)
 }
 
-func getLogWriter() io.Writer {
+func getEncoder() zapcore.Encoder {
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	return zapcore.NewConsoleEncoder(encoderConfig)
+}
+
+func getWriteSyncer() zapcore.WriteSyncer {
 	f, err := os.OpenFile(constant.ServerLogPath, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		panic(err)
 	}
-	return io.MultiWriter(f, os.Stdout)
+	return zapcore.NewMultiWriteSyncer(zapcore.AddSync(f), zapcore.AddSync(os.Stdout))
 }

@@ -1,23 +1,36 @@
 package main
 
 import (
-	"golang.org/x/exp/slog"
-	"terraria-run/internal/agent"
+	"go.uber.org/zap"
+	"terraria-run/internal/common/config"
 	_ "terraria-run/internal/common/config"
 	_ "terraria-run/internal/common/log"
-	"time"
 )
 
 func main() {
-	slog.Info("Start terraria run")
-	a := agent.NewAgent("")
-	err := a.Start()
-	if err != nil {
-		panic(err)
-	}
-	time.Sleep(10 * time.Second)
-	err = a.Stop()
-	if err != nil {
-		slog.Error("Stop agent failed", err)
-	}
+	zap.S().Info("Start terraria run")
+	config.Read()
+	defer config.Write()
+
+	//a := agent.NewAgent("")
+	//err := a.Start()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//time.Sleep(10 * time.Second)
+	//err = a.Stop()
+	//if err != nil {
+	//	zap.S().Error("Stop agent failed", err)
+	//}
+
+	//serverConfigHandler := serverconfig.NewHandler()
+	//if err := serverConfigHandler.Deploy(); err != nil {
+	//	panic(err)
+	//}
+	//
+	//modHandler := mod.NewHandler()
+	//err := modHandler.Deploy()
+	//if err != nil {
+	//	panic(err)
+	//}
 }

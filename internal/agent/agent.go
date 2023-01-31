@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"golang.org/x/exp/slog"
+	"go.uber.org/zap"
 	"io"
 	"os"
 	"os/exec"
@@ -33,7 +33,7 @@ func NewAgent(name string) *Agent {
 }
 
 func (a *Agent) Start() (err error) {
-	slog.Info("Start agent")
+	zap.S().Info("Start agent")
 	a.stdin, err = a.cmd.StdinPipe()
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (a *Agent) Start() (err error) {
 	go func() {
 		err := a.listenOutput()
 		if err != nil {
-			slog.Error("Stop listen output", err)
+			zap.S().Error("Stop listen output", err)
 		}
 	}()
 	err = a.cmd.Start()
@@ -60,7 +60,7 @@ func (a *Agent) Start() (err error) {
 }
 
 func (a *Agent) Stop() error {
-	slog.Info("Stop agent")
+	zap.S().Info("Stop agent")
 	defer a.stopListenOutput()
 	return a.stopProcess()
 }
@@ -75,7 +75,7 @@ func (a *Agent) RunCmd(cmd string) (string, error) {
 }
 
 func (a *Agent) listenOutput() error {
-	slog.Info("Begin listen output")
+	zap.S().Info("Begin listen output")
 	w, err := os.OpenFile(constant.TModLoaderLogPath, os.O_WRONLY|os.O_CREATE, 0640)
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (a *Agent) listenOutput() error {
 	defer func(w *os.File) {
 		err := w.Close()
 		if err != nil {
-			slog.Error("Close file failed", err)
+			zap.S().Error("Close file failed", err)
 		}
 	}(w)
 	r := io.MultiReader(a.stdout, a.stderr)
@@ -110,7 +110,7 @@ func (a *Agent) stopProcess() error {
 	t := time.Now()
 	for time.Since(t).Seconds() < 15 {
 		if a.cmd.ProcessState != nil {
-			slog.Info("Process exit normally")
+			zap.S().Info("Process exit normally")
 			return nil
 		}
 		time.Sleep(time.Second)
@@ -119,6 +119,6 @@ func (a *Agent) stopProcess() error {
 	if err != nil {
 		return err
 	}
-	slog.Error("Process been killed", nil)
+	zap.S().Error("Process been killed", nil)
 	return nil
 }

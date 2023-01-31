@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"golang.org/x/exp/slog"
+	"go.uber.org/zap"
 	"os/exec"
 	"strings"
 )
@@ -26,7 +26,7 @@ func RunCmd(cmd string) error {
 	}
 	out, err := c.CombinedOutput()
 	if err != nil {
-		slog.Error("Run cmd failed", err, "cmd", cmd, "out", out)
+		zap.S().Error("Run cmd failed", err, "cmd", cmd, "out", out)
 		return err
 	}
 	return nil

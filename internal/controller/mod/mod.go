@@ -3,9 +3,8 @@ package mod
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slog"
+	"go.uber.org/zap"
 	"io"
 	"os"
 	"os/exec"
@@ -39,20 +38,20 @@ func (h *Handler) Deploy() error {
 	if len(h.mods) == 0 {
 		return nil
 	}
-	slog.Info(fmt.Sprintf("Begin deploy %d mods", len(h.mods)))
+	zap.S().Infof("Begin deploy %d mods", len(h.mods))
 	if err := h.downloadMods(); err != nil {
-		slog.Error("Download mods failed", err)
+		zap.S().Error("Download mods failed", err)
 		return err
 	}
 	if err := h.copyMods(); err != nil {
-		slog.Error("Copy mods failed", err)
+		zap.S().Error("Copy mods failed", err)
 		return err
 	}
 	if err := h.writeEnableJson(); err != nil {
-		slog.Error("Write enable.json failed", err)
+		zap.S().Error("Write enable.json failed", err)
 		return err
 	}
-	slog.Info("Deploy mods success")
+	zap.S().Info("Deploy mods success")
 	return nil
 }
 
@@ -74,10 +73,10 @@ func (h *Handler) downloadMods() error {
 	go func(r io.Reader) {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
-			slog.Debug(scanner.Text())
+			zap.S().Debug(scanner.Text())
 		}
 		if err := scanner.Err(); err != nil {
-			slog.Error("Output scan failed", err)
+			zap.S().Error("Output scan failed", err)
 		}
 	}(r)
 	return cmd.Run()
@@ -118,7 +117,7 @@ func (h *Handler) copyMod(id int) error {
 				return err
 			}
 			h.modEnableData = append(h.modEnableData, strings.TrimSuffix(file.Name(), ".tmod"))
-			slog.Info(fmt.Sprintf("Copy mod from %s to %s", filepath.Join(latestModDir, file.Name()), constant.ModDir))
+			zap.S().Infof("Copy mod from %s to %s", filepath.Join(latestModDir, file.Name()), constant.ModDir)
 		}
 	}
 	return nil

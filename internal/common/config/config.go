@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/spf13/viper"
+	"encoding/json"
 	"os"
+	"terraria-run/assets"
 	"terraria-run/internal/common/constant"
-	"terraria-run/internal/common/model/model"
+	"terraria-run/internal/common/model"
 )
 
 const (
@@ -22,43 +23,41 @@ func init() {
 	setDefault()
 }
 
+var CFG *model.Config
+
 func Read() {
 	if _, err := os.Stat(constant.ConfigPath); os.IsNotExist(err) {
-		return
+		panic(err)
 	}
-	r, err := os.Open(constant.ConfigPath)
+	bytes, err := os.ReadFile(constant.ConfigPath)
 	if err != nil {
 		panic(err)
 	}
-	err = viper.ReadConfig(r)
-	if err != nil {
+	CFG = &model.Config{}
+	if err := json.Unmarshal(bytes, &CFG); err != nil {
 		panic(err)
 	}
 }
 
 func Write() {
-	err := viper.WriteConfigAs(constant.ConfigPath)
+	bytes, err := json.MarshalIndent(CFG, "", "    ")
 	if err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(constant.ConfigPath, bytes, 0644); err != nil {
 		panic(err)
 	}
 }
 
 func setDefault() {
-	// https://terraria.wiki.gg/wiki/Guide:Setting_up_a_Terraria_server
-	viper.SetDefault("server_config", map[string]any{
-		"auto_create": SizeLarge,
-		"seed":        "",
-		"world_name":  "NeutronStar",
-		"difficulty":  DifficultyMaster,
-		"max_players": 8,
-		"port":        7777,
-		"password":    "",
-	})
-	viper.SetDefault("mod", map[int]model.Mod{
-		2619954303: {
-			ID:     2619954303,
-			Name:   "Recipe Browser",
-			Enable: true,
-		},
-	})
+	if _, err := os.Stat(constant.ConfigPath); os.IsExist(err) {
+		return
+	}
+	bytes, err := assets.FS.ReadFile("asserts/config.json")
+	if err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(constant.ConfigPath, bytes, 0644); err != nil {
+		panic(err)
+	}
 }

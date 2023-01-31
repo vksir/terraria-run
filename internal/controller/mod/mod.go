@@ -3,17 +3,16 @@ package mod
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
+	"terraria-run/internal/common/config"
 	"terraria-run/internal/common/constant"
-	"terraria-run/internal/common/model/model"
+	"terraria-run/internal/common/model"
 	"terraria-run/internal/common/util"
 	"time"
 )
@@ -25,10 +24,9 @@ type Handler struct {
 
 func NewHandler() *Handler {
 	h := Handler{}
-	mods := viper.Get("mod").(map[int]model.Mod)
-	for id := range mods {
-		if mods[id].Enable {
-			h.mods = append(h.mods, mods[id])
+	for id := range config.CFG.IdToMod {
+		if config.CFG.IdToMod[id].Enable {
+			h.mods = append(h.mods, config.CFG.IdToMod[id])
 		}
 	}
 	return &h
@@ -58,7 +56,7 @@ func (h *Handler) Deploy() error {
 func (h *Handler) downloadMods() error {
 	cmd := exec.Command("steamcmd", "+login", "anonymous")
 	for i := range h.mods {
-		cmd.Args = append(cmd.Args, "+workshop_download_item", "1281930", strconv.Itoa(h.mods[i].ID))
+		cmd.Args = append(cmd.Args, "+workshop_download_item", "1281930", h.mods[i].Id)
 	}
 	cmd.Args = append(cmd.Args, "+quit")
 	stdout, err := cmd.StdoutPipe()
@@ -90,7 +88,7 @@ func (h *Handler) copyMods() error {
 		return err
 	}
 	for i := range h.mods {
-		if err := h.copyMod(h.mods[i].ID); err != nil {
+		if err := h.copyMod(h.mods[i].Id); err != nil {
 			return err
 		}
 	}
@@ -105,7 +103,7 @@ func (h *Handler) writeEnableJson() error {
 	return os.WriteFile(constant.EnableJson, bytes, 0644)
 }
 
-func (h *Handler) copyMod(id int) error {
+func (h *Handler) copyMod(id string) error {
 	latestModDir, err := getLatestModDir(id)
 	if err != nil {
 		return err
@@ -140,8 +138,8 @@ func (s sorter) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func getLatestModDir(id int) (string, error) {
-	modDir := filepath.Join(constant.SteamModDir, strconv.Itoa(id))
+func getLatestModDir(id string) (string, error) {
+	modDir := filepath.Join(constant.SteamModDir, id)
 	if _, err := os.Stat(modDir); os.IsNotExist(err) {
 		return "", err
 	}

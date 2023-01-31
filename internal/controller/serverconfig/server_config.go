@@ -2,11 +2,12 @@ package serverconfig
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"terraria-run/assets"
+	"terraria-run/internal/common/config"
 	"terraria-run/internal/common/constant"
 )
 
@@ -30,17 +31,17 @@ func (h *Handler) Deploy() error {
 }
 
 func (h *Handler) setRequiredOptions() {
-	h.set("world", filepath.Join(constant.WorldDir, fmt.Sprintf("%h.wld", viper.GetString("server_config.world_name"))))
-	h.set("autocreate", viper.GetString("server_config.auto_create"))
-	h.set("worldname", viper.GetString("server_config.world_name"))
-	h.set("difficulty", viper.GetString("server_config.difficulty"))
+	h.set("world", filepath.Join(constant.WorldDir, fmt.Sprintf("%s.wld", config.CFG.ServerConfig.WorldName)))
+	h.set("autocreate", strconv.Itoa(config.CFG.ServerConfig.AutoCreate))
+	h.set("worldname", config.CFG.ServerConfig.WorldName)
+	h.set("difficulty", strconv.Itoa(config.CFG.ServerConfig.Difficulty))
 	h.set("worldpath", constant.WorldDir)
 }
 
 func (h *Handler) setOptionalOptions() {
-	h.setIfNotEmpty("seed", viper.GetString("server_config.seed"))
-	h.setIfNotEmpty("maxplayers", viper.GetString("server_config.max_players"))
-	h.setIfNotEmpty("password", viper.GetString("server_config.password"))
+	h.setIfNotEmpty("seed", config.CFG.ServerConfig.Seed)
+	h.setIfNotEmpty("maxplayers", strconv.Itoa(config.CFG.ServerConfig.MaxPlayers))
+	h.setIfNotEmpty("password", config.CFG.ServerConfig.Password)
 }
 
 func (h *Handler) set(key, value string) {

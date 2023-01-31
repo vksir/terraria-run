@@ -1,0 +1,251 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Terraria Run",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/control/{action}": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "control"
+                ],
+                "summary": "服务器控制",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "[ start | stop | restart ]",
+                        "name": "action",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Ok"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            }
+        },
+        "/mod": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mod"
+                ],
+                "summary": "查看 Mods",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/modresp.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mod"
+                ],
+                "summary": "更新 Mods",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/modreq.Mods"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Ok"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mod"
+                ],
+                "summary": "添加 Mods",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/modreq.ModIds"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Ok"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "mod"
+                ],
+                "summary": "删除 Mods",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/modreq.ModIds"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Ok"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "commonresp.Err": {
+            "type": "object",
+            "properties": {
+                "detail": {
+                    "type": "string"
+                }
+            }
+        },
+        "commonresp.Ok": {
+            "type": "object"
+        },
+        "model.Mod": {
+            "type": "object",
+            "required": [
+                "enable",
+                "id",
+                "name"
+            ],
+            "properties": {
+                "enable": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "modreq.ModIds": {
+            "type": "object",
+            "properties": {
+                "mod_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "modreq.Mods": {
+            "type": "object",
+            "properties": {
+                "mods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Mod"
+                    }
+                }
+            }
+        },
+        "modresp.Response": {
+            "type": "object",
+            "properties": {
+                "mods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Mod"
+                    }
+                }
+            }
+        }
+    }
+}

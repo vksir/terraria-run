@@ -5,12 +5,12 @@ import (
 	"terraria-run/internal/common/config"
 	_ "terraria-run/internal/common/config"
 	_ "terraria-run/internal/common/log"
+	"terraria-run/internal/server"
 )
 
 func main() {
 	zap.S().Info("Start terraria run")
 	config.Read()
-	defer config.Write()
 
 	//a := agent.NewAgent("")
 	//err := a.Start()
@@ -33,4 +33,5 @@ func main() {
 	//if err != nil {
 	//	panic(err)
 	//}
+	server.Run()
 }

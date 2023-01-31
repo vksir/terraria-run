@@ -1,0 +1,162 @@
+definitions:
+  commonresp.Err:
+    properties:
+      detail:
+        type: string
+    type: object
+  commonresp.Ok:
+    type: object
+  model.Mod:
+    properties:
+      enable:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+    required:
+    - enable
+    - id
+    - name
+    type: object
+  modreq.ModIds:
+    properties:
+      mod_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  modreq.Mods:
+    properties:
+      mods:
+        items:
+          $ref: '#/definitions/model.Mod'
+        type: array
+    type: object
+  modresp.Response:
+    properties:
+      mods:
+        items:
+          $ref: '#/definitions/model.Mod'
+        type: array
+    type: object
+info:
+  contact: {}
+  title: Terraria Run
+  version: "1.0"
+paths:
+  /control/{action}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: '[ start | stop | restart ]'
+        in: path
+        name: action
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commonresp.Ok'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/commonresp.Err'
+      summary: 服务器控制
+      tags:
+      - control
+  /mod:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/modreq.ModIds'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commonresp.Ok'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/commonresp.Err'
+      summary: 删除 Mods
+      tags:
+      - mod
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/modresp.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/commonresp.Err'
+      summary: 查看 Mods
+      tags:
+      - mod
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/modreq.ModIds'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commonresp.Ok'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/commonresp.Err'
+      summary: 添加 Mods
+      tags:
+      - mod
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/modreq.Mods'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commonresp.Ok'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/commonresp.Err'
+      summary: 更新 Mods
+      tags:
+      - mod
+swagger: "2.0"

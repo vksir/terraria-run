@@ -24,7 +24,7 @@ func Workspace() string {
 }
 
 var InstallDir = filepath.Join(Home(), "neutron-star", "terraria-run")
-var ServerLogPath = filepath.Join(Workspace(), "server.log")
+var ServerLogPath = filepath.Join(Workspace(), "terraria-run.log")
 var DotnetPath = filepath.Join(InstallDir, "tModLoader/dotnet/6.0.0/dotnet")
 var ServerConfigPath = filepath.Join(Workspace(), "serverconfig.txt")
 var TModLoaderLogPath = filepath.Join(Workspace(), "tModLoader.log")

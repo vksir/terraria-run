@@ -31,6 +31,7 @@ func NewAgent(name string) *Agent {
 	a.cmd = exec.Command(constant.DotnetPath, "tModLoader.dll", "-server", "-config", constant.ServerConfigPath)
 	a.cmd.Dir = filepath.Join(constant.InstallDir, "tModLoader")
 	a.ctx, a.stopListenOutput = context.WithCancel(context.Background())
+	log.Infof("New agent: %s", strings.Join(a.cmd.Args, " "))
 	return &a
 }
 
@@ -91,6 +92,7 @@ func (a *Agent) listenOutput() error {
 	r := io.MultiReader(a.stdout, a.stderr)
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
+		log.Debug("[tModLoader] ", scanner.Text())
 		_, err = w.Write(append(scanner.Bytes(), '\n'))
 		if err != nil {
 			return err

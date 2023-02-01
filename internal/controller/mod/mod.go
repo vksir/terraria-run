@@ -73,7 +73,7 @@ func (h *Handler) downloadMods() error {
 	go func(r io.Reader) {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
-			log.Debug(scanner.Text())
+			log.Debug("[SteamCMD] ", scanner.Text())
 		}
 		if err := scanner.Err(); err != nil {
 			log.Error("Output scan failed", err)

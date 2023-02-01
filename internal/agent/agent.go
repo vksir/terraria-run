@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var log = zap.S()
+
 type Agent struct {
 	Name             string
 	cmd              *exec.Cmd
@@ -33,7 +35,7 @@ func NewAgent(name string) *Agent {
 }
 
 func (a *Agent) Start() (err error) {
-	zap.S().Info("Start agent")
+	log.Info("Start agent")
 	a.stdin, err = a.cmd.StdinPipe()
 	if err != nil {
 		return err
@@ -49,7 +51,7 @@ func (a *Agent) Start() (err error) {
 	go func() {
 		err := a.listenOutput()
 		if err != nil {
-			zap.S().Error("Stop listen output", err)
+			log.Error("Stop listen output", err)
 		}
 	}()
 	err = a.cmd.Start()
@@ -60,7 +62,7 @@ func (a *Agent) Start() (err error) {
 }
 
 func (a *Agent) Stop() error {
-	zap.S().Info("Stop agent")
+	log.Info("Stop agent")
 	defer a.stopListenOutput()
 	return a.stopProcess()
 }
@@ -75,7 +77,7 @@ func (a *Agent) RunCmd(cmd string) (string, error) {
 }
 
 func (a *Agent) listenOutput() error {
-	zap.S().Info("Begin listen output")
+	log.Info("Begin listen output")
 	w, err := os.OpenFile(constant.TModLoaderLogPath, os.O_WRONLY|os.O_CREATE, 0640)
 	if err != nil {
 		return err
@@ -83,7 +85,7 @@ func (a *Agent) listenOutput() error {
 	defer func(w *os.File) {
 		err := w.Close()
 		if err != nil {
-			zap.S().Error("Close file failed", err)
+			log.Error("Close file failed", err)
 		}
 	}(w)
 	r := io.MultiReader(a.stdout, a.stderr)
@@ -110,7 +112,7 @@ func (a *Agent) stopProcess() error {
 	t := time.Now()
 	for time.Since(t).Seconds() < 15 {
 		if a.cmd.ProcessState != nil {
-			zap.S().Info("Process exit normally")
+			log.Info("Process exit normally")
 			return nil
 		}
 		time.Sleep(time.Second)
@@ -119,6 +121,6 @@ func (a *Agent) stopProcess() error {
 	if err != nil {
 		return err
 	}
-	zap.S().Error("Process been killed", nil)
+	log.Error("Process been killed", nil)
 	return nil
 }

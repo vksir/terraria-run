@@ -17,6 +17,8 @@ import (
 	"time"
 )
 
+var log = zap.S()
+
 type Handler struct {
 	mods          []model.Mod
 	modEnableData []string
@@ -36,20 +38,20 @@ func (h *Handler) Deploy() error {
 	if len(h.mods) == 0 {
 		return nil
 	}
-	zap.S().Infof("Begin deploy %d mods", len(h.mods))
+	log.Infof("Begin deploy %d mods", len(h.mods))
 	if err := h.downloadMods(); err != nil {
-		zap.S().Error("Download mods failed", err)
+		log.Error("Download mods failed", err)
 		return err
 	}
 	if err := h.copyMods(); err != nil {
-		zap.S().Error("Copy mods failed", err)
+		log.Error("Copy mods failed", err)
 		return err
 	}
 	if err := h.writeEnableJson(); err != nil {
-		zap.S().Error("Write enable.json failed", err)
+		log.Error("Write enable.json failed", err)
 		return err
 	}
-	zap.S().Info("Deploy mods success")
+	log.Info("Deploy mods success")
 	return nil
 }
 
@@ -71,10 +73,10 @@ func (h *Handler) downloadMods() error {
 	go func(r io.Reader) {
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
-			zap.S().Debug(scanner.Text())
+			log.Debug(scanner.Text())
 		}
 		if err := scanner.Err(); err != nil {
-			zap.S().Error("Output scan failed", err)
+			log.Error("Output scan failed", err)
 		}
 	}(r)
 	return cmd.Run()
@@ -115,7 +117,7 @@ func (h *Handler) copyMod(id string) error {
 				return err
 			}
 			h.modEnableData = append(h.modEnableData, strings.TrimSuffix(file.Name(), ".tmod"))
-			zap.S().Infof("Copy mod from %s to %s", filepath.Join(latestModDir, file.Name()), constant.ModDir)
+			log.Infof("Copy mod from %s to %s", filepath.Join(latestModDir, file.Name()), constant.ModDir)
 		}
 	}
 	return nil

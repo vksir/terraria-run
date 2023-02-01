@@ -8,11 +8,14 @@ import (
 	"terraria-run/internal/server"
 )
 
+var log = zap.S()
+
 func main() {
-	zap.S().Info("Start terraria run")
+	log.Info("Start terraria run")
 	config.Read()
 
-	//a := agent.NewAgent("")
+	//a
+	//:= agent.NewAgent("")
 	//err := a.Start()
 	//if err != nil {
 	//	panic(err)
@@ -20,7 +23,7 @@ func main() {
 	//time.Sleep(10 * time.Second)
 	//err = a.Stop()
 	//if err != nil {
-	//	zap.S().Error("Stop agent failed", err)
+	//	log.Error("Stop agent failed", err)
 	//}
 
 	//serverConfigHandler := serverconfig.NewHandler()

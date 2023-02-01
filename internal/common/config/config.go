@@ -19,10 +19,6 @@ const (
 	DifficultyJourney = 3
 )
 
-func init() {
-	setDefault()
-}
-
 var CFG *model.Config
 
 func Read() {
@@ -47,6 +43,10 @@ func Write() {
 	if err := os.WriteFile(constant.ConfigPath, bytes, 0644); err != nil {
 		panic(err)
 	}
+}
+
+func init() {
+	setDefault()
 }
 
 func setDefault() {

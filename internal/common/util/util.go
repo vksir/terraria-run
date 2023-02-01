@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+var log = zap.S()
+
 func Copy(src, dst string) error {
 	return RunCmd(fmt.Sprintf("cp -rf %s %s", src, dst))
 }
@@ -26,7 +28,7 @@ func RunCmd(cmd string) error {
 	}
 	out, err := c.CombinedOutput()
 	if err != nil {
-		zap.S().Error("Run cmd failed", err, "cmd", cmd, "out", out)
+		log.Error("Run cmd failed", err, "cmd", cmd, "out", out)
 		return err
 	}
 	return nil

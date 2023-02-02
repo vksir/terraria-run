@@ -75,9 +75,6 @@ func (h *Handler) downloadMods() error {
 		for scanner.Scan() {
 			log.Debug("[SteamCMD] ", scanner.Text())
 		}
-		if err := scanner.Err(); err != nil {
-			log.Error("Output scan failed", err)
-		}
 	}(r)
 	return cmd.Run()
 }

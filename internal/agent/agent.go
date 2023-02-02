@@ -1,15 +1,14 @@
 package agent
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"go.uber.org/zap"
 	"io"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"terraria-run/internal/agent/output"
 	"terraria-run/internal/common/constant"
 	"time"
 )
@@ -17,7 +16,9 @@ import (
 var log = zap.S()
 
 type Agent struct {
-	Name             string
+	Name     string
+	Listener *output.Listener
+
 	cmd              *exec.Cmd
 	stdin            io.Writer
 	stdout           io.Reader
@@ -27,9 +28,13 @@ type Agent struct {
 }
 
 func NewAgent(name string) *Agent {
-	a := Agent{Name: name}
-	a.cmd = exec.Command(constant.DotnetPath, "tModLoader.dll", "-server", "-config", constant.ServerConfigPath)
-	a.cmd.Dir = filepath.Join(constant.InstallDir, "tModLoader")
+	cmd := exec.Command(constant.DotnetPath, "tModLoader.dll", "-server", "-config", constant.ServerConfigPath)
+	cmd.Dir = filepath.Join(constant.InstallDir, "tModLoader")
+	a := Agent{
+		Name:     name,
+		cmd:      cmd,
+		Listener: output.NewListener(),
+	}
 	a.ctx, a.stopListenOutput = context.WithCancel(context.Background())
 	log.Infof("New agent: %s", strings.Join(a.cmd.Args, " "))
 	return &a
@@ -50,9 +55,9 @@ func (a *Agent) Start() (err error) {
 		return err
 	}
 	go func() {
-		err := a.listenOutput()
+		err := a.Listener.Run(a.ctx, io.MultiReader(a.stdout, a.stderr))
 		if err != nil {
-			log.Error("Stop listen output", err)
+			log.Error("Listener stopped", err)
 		}
 	}()
 	err = a.cmd.Start()
@@ -69,41 +74,13 @@ func (a *Agent) Stop() error {
 }
 
 func (a *Agent) RunCmd(cmd string) (string, error) {
+	// TODO: Read output
 	cmd = fmt.Sprintf("%s\n", strings.TrimRight(cmd, "\n"))
 	_, err := a.stdin.Write([]byte(cmd))
 	if err != nil {
 		return "", err
 	}
 	return "", nil
-}
-
-func (a *Agent) listenOutput() error {
-	log.Info("Begin listen output")
-	w, err := os.OpenFile(constant.TModLoaderLogPath, os.O_WRONLY|os.O_CREATE, 0640)
-	if err != nil {
-		return err
-	}
-	defer func(w *os.File) {
-		err := w.Close()
-		if err != nil {
-			log.Error("Close file failed", err)
-		}
-	}(w)
-	r := io.MultiReader(a.stdout, a.stderr)
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		log.Debug("[tModLoader] ", scanner.Text())
-		_, err = w.Write(append(scanner.Bytes(), '\n'))
-		if err != nil {
-			return err
-		}
-		select {
-		case <-a.ctx.Done():
-			return nil
-		default:
-		}
-	}
-	return scanner.Err()
 }
 
 func (a *Agent) stopProcess() error {

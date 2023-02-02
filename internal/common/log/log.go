@@ -23,7 +23,7 @@ func getEncoder() zapcore.Encoder {
 }
 
 func getWriteSyncer() zapcore.WriteSyncer {
-	f, err := os.OpenFile(constant.ServerLogPath, os.O_WRONLY|os.O_CREATE, 0644)
+	f, err := os.OpenFile(constant.ServerLogPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		panic(err)
 	}

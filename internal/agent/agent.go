@@ -5,86 +5,80 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"io"
-	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
-	"terraria-run/internal/agent/output"
-	"terraria-run/internal/common/constant"
+	"terraria-run/internal/agent/handler"
+	"terraria-run/internal/agent/listener"
+	"terraria-run/internal/agent/process"
 	"time"
 )
 
 var log = zap.S()
 
 type Agent struct {
-	Name     string
-	Listener *output.Listener
-
-	cmd              *exec.Cmd
-	stdin            io.Writer
-	stdout           io.Reader
-	stderr           io.Reader
+	Name             string
+	Listener         *listener.Listener
+	Process          *process.Process
+	Record           *handler.Record
+	Report           *handler.Report
+	Cut              *handler.Cut
 	ctx              context.Context
 	stopListenOutput context.CancelFunc
 }
 
 func NewAgent(name string) *Agent {
-	cmd := exec.Command(constant.DotnetPath, "tModLoader.dll", "-server", "-config", constant.ServerConfigPath)
-	cmd.Dir = filepath.Join(constant.InstallDir, "tModLoader")
 	a := Agent{
 		Name:     name,
-		cmd:      cmd,
-		Listener: output.NewListener(),
+		Process:  process.NewProcess(""),
+		Listener: listener.NewListener(),
+		Record:   handler.NewRecord(),
+		Report:   handler.NewReport(),
+		Cut:      handler.NewCut(),
 	}
 	a.ctx, a.stopListenOutput = context.WithCancel(context.Background())
-	log.Infof("New agent: %s", strings.Join(a.cmd.Args, " "))
+	a.Listener.RegisterHandler(a.Record)
+	a.Listener.RegisterHandler(a.Report)
+	a.Listener.RegisterHandler(a.Cut)
 	return &a
 }
 
-func (a *Agent) Start() (err error) {
+func (a *Agent) Start() error {
 	log.Info("Start agent")
-	a.stdin, err = a.cmd.StdinPipe()
-	if err != nil {
+	if err := a.Process.Start(); err != nil {
 		return err
 	}
-	a.stdout, err = a.cmd.StdoutPipe()
-	if err != nil {
+	if err := a.Record.Start(a.ctx); err != nil {
 		return err
 	}
-	a.stderr, err = a.cmd.StderrPipe()
-	if err != nil {
+	if err := a.Report.Start(a.ctx); err != nil {
 		return err
 	}
-	go func() {
-		err := a.Listener.Run(a.ctx, io.MultiReader(a.stdout, a.stderr))
-		if err != nil {
-			log.Error("Listener stopped", err)
-		}
-	}()
-	err = a.cmd.Start()
-	if err != nil {
+	if err := a.Cut.Start(a.ctx); err != nil {
 		return err
 	}
-	return err
+	if err := a.Listener.Start(a.ctx, io.MultiReader(a.Process.Stdout, a.Process.Stderr)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *Agent) Stop() error {
 	log.Info("Stop agent")
 	defer a.stopListenOutput()
-	return a.stopProcess()
+	return a.Process.Stop()
 }
 
 func (a *Agent) RunCmd(cmd string) (string, error) {
 	cmd = strings.TrimRight(cmd, "\n")
-	if err := a.Listener.Cut.BeginCut(); err != nil {
+	if err := a.Cut.BeginCut(); err != nil {
 		return "", err
 	}
-	if _, err := a.stdin.Write([]byte(fmt.Sprintf("[BEGIN_CMD]\n%s\n[END_CMD]\n", cmd))); err != nil {
-		_, _ = a.Listener.Cut.StopCut()
+	if _, err := a.Process.Stdin.Write([]byte(fmt.Sprintf("[BEGIN_CMD]\n%s\n[END_CMD]\n", cmd))); err != nil {
+		_, _ = a.Cut.StopCut()
 		return "", err
 	}
 	time.Sleep(500 * time.Millisecond)
-	rawOut, err := a.Listener.Cut.StopCut()
+	rawOut, err := a.Cut.StopCut()
 	if err != nil {
 		return "", err
 	}
@@ -95,22 +89,4 @@ func (a *Agent) RunCmd(cmd string) (string, error) {
 	}
 	log.Infof("Run cmd %s success: %s", cmd, res[1])
 	return res[1], nil
-}
-
-func (a *Agent) stopProcess() error {
-	_, _ = a.RunCmd("exit")
-	t := time.Now()
-	for time.Since(t).Seconds() < 15 {
-		if a.cmd.ProcessState != nil {
-			log.Info("Process exit normally")
-			return nil
-		}
-		time.Sleep(time.Second)
-	}
-
-	if err := a.cmd.Process.Kill(); err != nil {
-		return err
-	}
-	log.Error("Process been killed", nil)
-	return nil
 }

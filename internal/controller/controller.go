@@ -71,14 +71,14 @@ func watchAgentStaringComplete(a *agent.Agent) {
 	defer func() {
 		changeStatus(StatusActive)
 	}()
-	for !a.Listener.Report.Ready() {
+	for !a.Report.Ready() {
 		time.Sleep(500 * time.Millisecond)
 	}
 	log.Info("Report is ready, begin watch")
 	for {
 		// TODO: Think about process dead
 		time.Sleep(500 * time.Millisecond)
-		events, err := a.Listener.Report.GetEvents()
+		events, err := a.Report.GetEvents()
 		if err != nil {
 			log.Error("Get report events failed: ", err)
 			return

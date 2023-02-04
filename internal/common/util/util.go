@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"os/exec"
+	"path"
+	"runtime"
 	"strings"
 )
 
@@ -32,4 +34,20 @@ func RunCmd(cmd string) error {
 		return err
 	}
 	return nil
+}
+
+type Closeable interface {
+	Close() error
+}
+
+func Close(c Closeable) {
+	if err := c.Close(); err != nil {
+		log.Errorf("[%s] Close failed", GetShortFile(1))
+	}
+}
+
+func GetShortFile(skip int) string {
+	_, filePath, line, _ := runtime.Caller(skip + 1)
+	_, filename := path.Split(filePath)
+	return fmt.Sprintf("%s:%s", filename, line)
 }

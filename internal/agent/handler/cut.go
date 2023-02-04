@@ -8,63 +8,66 @@ import (
 )
 
 type Cut struct {
-	cutReady   *atomic.Bool
-	cutFlag    *atomic.Bool
+	ready      *atomic.Bool
+	flag       *atomic.Bool
 	channel    chan *string
 	cutContent []string
 }
 
 func NewCut() *Cut {
 	c := Cut{
-		cutReady: &atomic.Bool{},
-		cutFlag:  &atomic.Bool{},
-		channel:  make(chan *string, bufferSize),
+		ready:   &atomic.Bool{},
+		flag:    &atomic.Bool{},
+		channel: make(chan *string, bufferSize),
 	}
-	c.cutFlag.Store(false)
+	c.flag.Store(false)
 	return &c
 }
 
 func (c *Cut) Ready() bool {
-	return c.cutReady.Load()
+	return c.ready.Load()
 }
 
 func (c *Cut) Channel() chan *string {
 	return c.channel
 }
 
-func (c *Cut) Run(ctx context.Context) error {
-	c.cutReady.Store(true)
-	defer c.cutReady.Store(false)
+func (c *Cut) Start(ctx context.Context) error {
 	log.Info("Begin output cut")
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("Stop output cut")
-			return nil
-		case s := <-c.channel:
-			if c.cutFlag.Load() {
-				c.cutContent = append(c.cutContent, *s)
+	go func() {
+		defer c.ready.Store(false)
+		for {
+			select {
+			case <-ctx.Done():
+				log.Warn("Output cut stopped")
+				return
+			case s := <-c.channel:
+				if c.flag.Load() {
+					c.cutContent = append(c.cutContent, *s)
+				}
 			}
 		}
-	}
+	}()
+	c.ready.Store(true)
+	return nil
 }
 
 func (c *Cut) BeginCut() error {
-	if !c.cutReady.Load() {
+	if !c.ready.Load() {
 		return fmt.Errorf("cut is not ready, begin cut failed")
 	}
-	if c.cutFlag.Load() {
+	if c.flag.Load() {
 		return fmt.Errorf("cutting now, begin cut failed")
 	}
-	c.cutFlag.Store(true)
+	c.flag.Store(true)
 	return nil
 }
 
 func (c *Cut) StopCut() (string, error) {
-	if !c.cutFlag.Load() {
+	if !c.flag.Load() {
 		return "", fmt.Errorf("not cutting, stop cut failed")
 	}
-	c.cutFlag.Store(false)
+	c.flag.Store(false)
 	content := strings.Join(c.cutContent, "\n")
 	log.Debug("Cut success: ", content)
 	return content, nil

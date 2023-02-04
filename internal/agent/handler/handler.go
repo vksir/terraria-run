@@ -15,5 +15,5 @@ var log = zap.S()
 type Handler interface {
 	Ready() bool
 	Channel() chan *string
-	Run(context.Context) error
+	Start(context.Context) error
 }

@@ -13,6 +13,8 @@ const (
 	TypeServerActive = "SERVER_ACTIVE"
 )
 
+var rawEvents = getEvents()
+
 type Report struct {
 	ready   *atomic.Bool
 	lock    *sync.Mutex
@@ -47,44 +49,30 @@ func (r *Report) Channel() chan *string {
 	return r.channel
 }
 
-func (r *Report) Run(ctx context.Context) error {
-	r.ready.Store(true)
-	defer r.ready.Store(false)
-	events := getEvents()
-	for i := range events {
-		events[i].Pattern = regexp.MustCompile(events[i].PatternString)
-	}
+func (r *Report) Start(ctx context.Context) error {
 	log.Info("Begin output report")
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("Stop output report")
-			return nil
-		case s := <-r.channel:
-			for i := range events {
-				if res := events[i].Pattern.FindStringSubmatch(*s); res != nil {
-					var args []any
-					res = res[1:]
-					for i := range res {
-						args = append(args, res[i])
-					}
-					e := Event{
-						Level: events[i].Level,
-						Time:  time.Now().Unix(),
-						Msg:   fmt.Sprintf(events[i].Format, args...),
-						Type:  events[i].Type,
-					}
+	go func() {
+		defer r.ready.Store(false)
+		for {
+			select {
+			case <-ctx.Done():
+				log.Warn("Output report stopped")
+				return
+			case s := <-r.channel:
+				if e := parseEvent(s); e != nil {
 					r.lock.Lock()
-					r.events = append(r.events, &e)
+					r.events = append(r.events, e)
 					if len(r.events) > reportSize {
 						r.events = r.events[len(r.events)-reportSize:]
 					}
 					r.lock.Unlock()
-					log.Infof("Create event: %+v", e)
+					log.Infof("Report event: %+v", *e)
 				}
 			}
 		}
-	}
+	}()
+	r.ready.Store(true)
+	return nil
 }
 
 func (r *Report) GetEvents() ([]*Event, error) {
@@ -98,8 +86,28 @@ func (r *Report) GetEvents() ([]*Event, error) {
 	return events, nil
 }
 
+func parseEvent(s *string) *Event {
+	for i := range rawEvents {
+		if res := rawEvents[i].Pattern.FindStringSubmatch(*s); res != nil {
+			var args []any
+			res = res[1:]
+			for i := range res {
+				args = append(args, res[i])
+			}
+			e := Event{
+				Level: rawEvents[i].Level,
+				Time:  time.Now().Unix(),
+				Msg:   fmt.Sprintf(rawEvents[i].Format, args...),
+				Type:  rawEvents[i].Type,
+			}
+			return &e
+		}
+	}
+	return nil
+}
+
 func getEvents() []*Event {
-	return []*Event{
+	events := []*Event{
 		{
 			// Finding Mods...
 			PatternString: `Finding Mods`,
@@ -120,4 +128,8 @@ func getEvents() []*Event {
 			Type:          TypeServerActive,
 		},
 	}
+	for i := range events {
+		events[i].Pattern = regexp.MustCompile(events[i].PatternString)
+	}
+	return events
 }

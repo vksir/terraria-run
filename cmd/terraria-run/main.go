@@ -5,7 +5,6 @@ import (
 	"terraria-run/internal/common/config"
 	_ "terraria-run/internal/common/config"
 	_ "terraria-run/internal/common/log"
-	"terraria-run/internal/controller"
 	"terraria-run/internal/server"
 )
 
@@ -37,8 +36,8 @@ func main() {
 	//if err != nil {
 	//	panic(err)
 	//}
-	if err := controller.Start(); err != nil {
-		panic(err)
-	}
+	//if err := controller.Start(); err != nil {
+	//	panic(err)
+	//}
 	server.Run()
 }

@@ -3,9 +3,13 @@ package controller
 import (
 	"fmt"
 	"go.uber.org/zap"
+	"path"
+	"runtime"
 	"terraria-run/internal/agent"
+	"terraria-run/internal/agent/handler"
 	"terraria-run/internal/controller/mod"
 	"terraria-run/internal/controller/serverconfig"
+	"time"
 )
 
 const (
@@ -17,6 +21,8 @@ const (
 	StatusUpdating   = "UPDATING"
 )
 
+// TODO: Use lock
+
 var log = zap.S()
 var status = StatusInactive
 var agt *agent.Agent
@@ -25,10 +31,11 @@ func Status() string {
 	return status
 }
 
+func Agent() *agent.Agent {
+	return agt
+}
+
 func Start() error {
-	if status != StatusInactive {
-		return fmt.Errorf("status is %s, cannot start", status)
-	}
 	if err := serverconfig.NewHandler().Deploy(); err != nil {
 		return err
 	}
@@ -39,26 +46,54 @@ func Start() error {
 	if err := a.Start(); err != nil {
 		return err
 	}
-	a = agt
-	status = StatusStarting
-	// TODO: watch starting complete
+	agt = a
+	changeStatus(StatusStarting)
+	go watchAgentStaringComplete(a)
 	return nil
 }
 
 func Stop() error {
-	if status != StatusActive && status != StatusStarting {
-		return fmt.Errorf("status is %s, cannot stop", status)
-	}
 	if agt == nil {
 		return fmt.Errorf("agent is nil, stop failed")
 	}
-	status = StatusStopping
+	changeStatus(StatusStopping)
 	go func() {
 		if err := agt.Stop(); err != nil {
 			panic(err)
 		}
 		agt = nil
-		status = StatusInactive
+		changeStatus(StatusInactive)
 	}()
 	return nil
+}
+
+func watchAgentStaringComplete(a *agent.Agent) {
+	defer func() {
+		changeStatus(StatusActive)
+	}()
+	for !a.Listener.Report.Ready() {
+		time.Sleep(500 * time.Millisecond)
+	}
+	log.Info("Report is ready, begin watch")
+	for {
+		// TODO: Think about process dead
+		time.Sleep(500 * time.Millisecond)
+		events, err := a.Listener.Report.GetEvents()
+		if err != nil {
+			log.Error("Get report events failed: ", err)
+			return
+		}
+		for i := range events {
+			if events[i].Type == handler.TypeServerActive {
+				return
+			}
+		}
+	}
+}
+
+func changeStatus(newStatus string) {
+	_, filePath, line, _ := runtime.Caller(1)
+	_, filename := path.Split(filePath)
+	log.Warnf("[%s:%d] Status change from %s to %s", filename, line, status, newStatus)
+	status = newStatus
 }

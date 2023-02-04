@@ -1,5 +1,5 @@
 package actionreq
 
 type Params struct {
-	Action string `json:"action"`
+	Action string `uri:"action" binding:"required"`
 }

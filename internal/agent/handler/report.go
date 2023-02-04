@@ -6,15 +6,18 @@ import (
 	"regexp"
 	"sync"
 	"sync/atomic"
-	"terraria-run/internal/common/model"
 	"time"
+)
+
+const (
+	TypeServerActive = "SERVER_ACTIVE"
 )
 
 type Report struct {
 	ready   *atomic.Bool
 	lock    *sync.Mutex
 	channel chan *string
-	events  []*model.Event
+	events  []*Event
 }
 
 type Event struct {
@@ -22,6 +25,9 @@ type Event struct {
 	Pattern       *regexp.Regexp
 	Format        string
 	Level         string
+	Time          int64
+	Msg           string
+	Type          string
 }
 
 func NewReport() *Report {
@@ -62,10 +68,11 @@ func (r *Report) Run(ctx context.Context) error {
 					for i := range res {
 						args = append(args, res[i])
 					}
-					e := model.Event{
+					e := Event{
+						Level: events[i].Level,
 						Time:  time.Now().Unix(),
 						Msg:   fmt.Sprintf(events[i].Format, args...),
-						Level: events[i].Level,
+						Type:  events[i].Type,
 					}
 					r.lock.Lock()
 					r.events = append(r.events, &e)
@@ -80,13 +87,13 @@ func (r *Report) Run(ctx context.Context) error {
 	}
 }
 
-func (r *Report) GetEvents() ([]*model.Event, error) {
+func (r *Report) GetEvents() ([]*Event, error) {
 	if !r.Ready() {
 		return nil, fmt.Errorf("report is not ready, get events failed")
 	}
-	var events []*model.Event
 	r.lock.Lock()
-	copy(r.events, events)
+	events := make([]*Event, len(r.events))
+	copy(events, r.events)
 	r.lock.Unlock()
 	return events, nil
 }
@@ -109,7 +116,8 @@ func getEvents() []*Event {
 			// Server started
 			PatternString: `Server started`,
 			Format:        "服务器启动成功",
-			Level:         "info",
+			Level:         "warning",
+			Type:          TypeServerActive,
 		},
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"terraria-run/internal/agent/output"
 	"terraria-run/internal/common/constant"
@@ -74,20 +75,30 @@ func (a *Agent) Stop() error {
 }
 
 func (a *Agent) RunCmd(cmd string) (string, error) {
-	// TODO: Read output
-	cmd = fmt.Sprintf("%s\n", strings.TrimRight(cmd, "\n"))
-	_, err := a.stdin.Write([]byte(cmd))
+	cmd = strings.TrimRight(cmd, "\n")
+	if err := a.Listener.Cut.BeginCut(); err != nil {
+		return "", err
+	}
+	if _, err := a.stdin.Write([]byte(fmt.Sprintf("[BEGIN_CMD]\n%s\n[END_CMD]\n", cmd))); err != nil {
+		_, _ = a.Listener.Cut.StopCut()
+		return "", err
+	}
+	time.Sleep(500 * time.Millisecond)
+	rawOut, err := a.Listener.Cut.StopCut()
 	if err != nil {
 		return "", err
 	}
-	return "", nil
+	pattern := regexp.MustCompile(`(?ms)Invalid command.*^(.*)$\n.*Invalid command`)
+	res := pattern.FindStringSubmatch(rawOut)
+	if len(res) == 0 {
+		return "", fmt.Errorf("regex cmd out failed: %s", rawOut)
+	}
+	log.Infof("Run cmd %s success: %s", cmd, res[1])
+	return res[1], nil
 }
 
 func (a *Agent) stopProcess() error {
-	_, err := a.RunCmd("exit")
-	if err != nil {
-		return err
-	}
+	_, _ = a.RunCmd("exit")
 	t := time.Now()
 	for time.Since(t).Seconds() < 15 {
 		if a.cmd.ProcessState != nil {
@@ -96,8 +107,8 @@ func (a *Agent) stopProcess() error {
 		}
 		time.Sleep(time.Second)
 	}
-	err = a.cmd.Process.Kill()
-	if err != nil {
+
+	if err := a.cmd.Process.Kill(); err != nil {
 		return err
 	}
 	log.Error("Process been killed", nil)

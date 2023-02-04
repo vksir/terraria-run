@@ -53,6 +53,34 @@ const docTemplate = `{
                 }
             }
         },
+        "/game/players": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "查看当前玩家",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gameresp.Players"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            }
+        },
         "/mod": {
             "get": {
                 "consumes": [
@@ -204,6 +232,17 @@ const docTemplate = `{
         },
         "commonresp.Ok": {
             "type": "object"
+        },
+        "gameresp.Players": {
+            "type": "object",
+            "properties": {
+                "players": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
         },
         "model.Mod": {
             "type": "object",

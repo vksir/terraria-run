@@ -6,6 +6,13 @@ definitions:
     type: object
   commonresp.Ok:
     type: object
+  gameresp.Players:
+    properties:
+      players:
+        items:
+          type: string
+        type: array
+    type: object
   model.Mod:
     properties:
       enable:
@@ -69,6 +76,24 @@ paths:
       summary: 服务器控制
       tags:
       - control
+  /game/players:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gameresp.Players'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/commonresp.Err'
+      summary: 查看当前玩家
+      tags:
+      - game
   /mod:
     delete:
       consumes:

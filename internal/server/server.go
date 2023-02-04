@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"terraria-run/internal/server/router/control"
+	"terraria-run/internal/server/router/game"
 	"terraria-run/internal/server/router/mod"
 	"terraria-run/internal/server/swagger"
 )
@@ -25,4 +26,5 @@ func loadRouters(e *gin.Engine) {
 	control.LoadRouters(publicGroup)
 	mod.LoadRouters(publicGroup)
 	swagger.LoadRouters(publicGroup)
+	game.LoadRouters(publicGroup)
 }

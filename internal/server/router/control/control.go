@@ -30,29 +30,20 @@ func control(c *gin.Context) {
 	}
 	switch params.Action {
 	case "start":
-		if status := controller.Status(); status != controller.StatusInactive {
-			c.JSON(http.StatusBadRequest, commonresp.Err{
-				Detail: fmt.Sprintf("Status is %s, cannot start", status),
-			})
-			return
-		}
 		if err := controller.Start(); err != nil {
-			c.JSON(http.StatusForbidden, commonresp.Err{Detail: err.Error()})
+			c.JSON(http.StatusInternalServerError, commonresp.Err{Detail: err.Error()})
 			return
 		}
 	case "stop":
-		if status := controller.Status(); status != controller.StatusActive && status != controller.StatusStarting {
-			c.JSON(http.StatusBadRequest, commonresp.Err{
-				Detail: fmt.Sprintf("Status is %s, cannot stop", status),
-			})
-			return
-		}
 		if err := controller.Stop(); err != nil {
-			c.JSON(http.StatusForbidden, commonresp.Err{Detail: err.Error()})
+			c.JSON(http.StatusInternalServerError, commonresp.Err{Detail: err.Error()})
 			return
 		}
 	case "restart":
-		// TODO
+		if err := controller.Restart(); err != nil {
+			c.JSON(http.StatusInternalServerError, commonresp.Err{Detail: err.Error()})
+			return
+		}
 	default:
 		c.JSON(http.StatusBadRequest, commonresp.Err{Detail: fmt.Sprintf("Invalid action: %s", params.Action)})
 		return

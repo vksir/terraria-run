@@ -1,12 +1,11 @@
 package controller
 
 import (
-	"fmt"
 	"go.uber.org/zap"
-	"path"
-	"runtime"
+	"sync"
 	"terraria-run/internal/agent"
 	"terraria-run/internal/agent/handler"
+	"terraria-run/internal/common/util"
 	"terraria-run/internal/controller/mod"
 	"terraria-run/internal/controller/serverconfig"
 	"time"
@@ -21,79 +20,97 @@ const (
 	StatusUpdating   = "UPDATING"
 )
 
-// TODO: Use lock
-
 var log = zap.S()
-var status = StatusInactive
-var agt *agent.Agent
-
-func Status() string {
-	return status
-}
-
-func Agent() *agent.Agent {
-	return agt
-}
+var Status = StatusInactive
+var Agent *agent.Agent
+var Lock = sync.Mutex{}
 
 func Start() error {
+	Lock.Lock()
+	defer Lock.Unlock()
 	if err := serverconfig.NewHandler().Deploy(); err != nil {
 		return err
 	}
 	if err := mod.NewHandler().Deploy(); err != nil {
 		return err
 	}
-	a := agent.NewAgent("")
-	if err := a.Start(); err != nil {
-		return err
-	}
-	agt = a
-	changeStatus(StatusStarting)
-	go watchAgentStaringComplete(a)
-	return nil
+	return startAgent()
 }
 
 func Stop() error {
-	if agt == nil {
-		return fmt.Errorf("agent is nil, stop failed")
-	}
-	changeStatus(StatusStopping)
-	go func() {
-		if err := agt.Stop(); err != nil {
-			panic(err)
-		}
-		agt = nil
-		changeStatus(StatusInactive)
-	}()
+	Lock.Lock()
+	defer Lock.Unlock()
+	stopAgent()
 	return nil
 }
 
-func watchAgentStaringComplete(a *agent.Agent) {
-	defer func() {
-		changeStatus(StatusActive)
-	}()
-	for !a.Report.Ready() {
-		time.Sleep(500 * time.Millisecond)
+func Restart() error {
+	if err := Stop(); err != nil {
+		return err
 	}
-	log.Info("Report is ready, begin watch")
+	return Start()
+}
+
+func startAgent() error {
+	if Agent != nil {
+		log.Info("Agent is not nil, no need start")
+		return nil
+	}
+	changeStatus(StatusStarting)
+	Agent = agent.NewAgent("")
+	if err := Agent.Start(); err != nil {
+		stopAgent()
+		return err
+	}
+	go watchAgentStaringComplete()
+	return nil
+}
+
+func stopAgent() {
+	if Agent == nil {
+		log.Info("Agent is nil, no need stop")
+		return
+	}
+	changeStatus(StatusStopping)
+	if err := Agent.Stop(); err != nil {
+		log.Error("Stop agent failed: ", err)
+	}
+	Agent = nil
+	changeStatus(StatusInactive)
+}
+
+func watchAgentStaringComplete() {
+	// TODO: Timeout
+	defer Lock.Unlock()
+	log.Info("Begin watch agent starting complete")
 	for {
-		// TODO: Think about process dead
-		time.Sleep(500 * time.Millisecond)
-		events, err := a.Report.GetEvents()
+		Lock.Lock()
+		if Agent == nil {
+			log.Info("Agent stopped, stop watch")
+			changeStatus(StatusInactive)
+			return
+		}
+		events, err := Agent.Report.GetEvents()
 		if err != nil {
 			log.Error("Get report events failed: ", err)
+			changeStatus(StatusActive)
 			return
 		}
 		for i := range events {
 			if events[i].Type == handler.TypeServerActive {
+				changeStatus(StatusActive)
 				return
 			}
 		}
+		Lock.Unlock()
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
-func changeStatus(newStatus string) {
-	_, filePath, line, _ := runtime.Caller(1)
-	_, filename := path.Split(filePath)
-	log.Warnf("[%s:%d] Status change from %s to %s", filename, line, status, newStatus)
-	status = newStatus
+func changeStatus(status string) {
+	if Status == status {
+		return
+	}
+	log.Warnf("[%s] Status change from %s to %s", util.GetShortFile(1), Status, status)
+	Status = status
 }

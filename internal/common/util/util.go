@@ -49,5 +49,5 @@ func Close(c Closeable) {
 func GetShortFile(skip int) string {
 	_, filePath, line, _ := runtime.Caller(skip + 1)
 	_, filename := path.Split(filePath)
-	return fmt.Sprintf("%s:%s", filename, line)
+	return fmt.Sprintf("%s:%d", filename, line)
 }

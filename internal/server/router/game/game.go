@@ -22,13 +22,13 @@ func LoadRouters(g *gin.RouterGroup) {
 // @Failure			500 {object} commonresp.Err
 // @Router			/game/players [get]
 func getPlayers(c *gin.Context) {
-	if status := controller.Status(); status != controller.StatusActive {
+	if controller.Status != controller.StatusActive {
 		c.JSON(http.StatusBadRequest, commonresp.Err{
-			Detail: fmt.Sprintf("Status %s, cannot get players", status),
+			Detail: fmt.Sprintf("Status is %s, cannot get players", controller.Status),
 		})
 		return
 	}
-	out, err := controller.Agent().RunCmd("playing")
+	out, err := controller.Agent.RunCmd("playing")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, commonresp.Err{Detail: err.Error()})
 		return

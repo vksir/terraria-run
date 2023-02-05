@@ -11,9 +11,10 @@ import (
 
 func LoadRouters(g *gin.RouterGroup) {
 	g.GET("/game/players", getPlayers)
+	g.GET("/game/events", getEvents)
 }
 
-// players godoc
+// getPlayers godoc
 // @Summary			查看当前玩家
 // @Tags			game
 // @Accept			json
@@ -34,4 +35,31 @@ func getPlayers(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gameresp.Players{Players: []string{out}})
+}
+
+// getEvents godoc
+// @Summary			查看当前事件
+// @Description		Event Type: [ SERVER_ACTIVE ]
+// @Tags			game
+// @Accept			json
+// @Produce			json
+// @Success			200 {object} gameresp.Events
+// @Failure			500 {object} commonresp.Err
+// @Router			/game/events [get]
+func getEvents(c *gin.Context) {
+	events, err := controller.Report.GetEvents()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, commonresp.Err{Detail: err.Error()})
+		return
+	}
+	var respEvents gameresp.Events
+	for i := range events {
+		respEvents.Events = append(respEvents.Events, gameresp.Event{
+			Level: events[i].Level,
+			Time:  events[i].Time,
+			Msg:   events[i].Msg,
+			Type:  events[i].Type,
+		})
+	}
+	c.JSON(http.StatusOK, respEvents)
 }

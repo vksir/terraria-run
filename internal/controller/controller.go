@@ -24,6 +24,7 @@ var log = zap.S()
 var Status = StatusInactive
 var Agent *agent.Agent
 var Lock = sync.Mutex{}
+var Report = handler.NewReport()
 
 func Start() error {
 	Lock.Lock()
@@ -57,7 +58,7 @@ func startAgent() error {
 		return nil
 	}
 	changeStatus(StatusStarting)
-	Agent = agent.NewAgent("")
+	Agent = agent.NewAgent("", Report)
 	if err := Agent.Start(); err != nil {
 		stopAgent()
 		return err
@@ -81,16 +82,14 @@ func stopAgent() {
 
 func watchAgentStaringComplete() {
 	// TODO: Timeout
-	defer Lock.Unlock()
 	log.Info("Begin watch agent starting complete")
 	for {
-		Lock.Lock()
 		if Agent == nil {
 			log.Info("Agent stopped, stop watch")
 			changeStatus(StatusInactive)
 			return
 		}
-		events, err := Agent.Report.GetEvents()
+		events, err := Report.GetEvents()
 		if err != nil {
 			log.Error("Get report events failed: ", err)
 			changeStatus(StatusActive)
@@ -102,7 +101,6 @@ func watchAgentStaringComplete() {
 				return
 			}
 		}
-		Lock.Unlock()
 		time.Sleep(500 * time.Millisecond)
 	}
 }

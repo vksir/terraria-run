@@ -53,6 +53,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/game/events": {
+            "get": {
+                "description": "Event Type: [ SERVER_ACTIVE ]",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "查看当前事件",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gameresp.Events"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            }
+        },
         "/game/players": {
             "get": {
                 "consumes": [
@@ -232,6 +261,34 @@ const docTemplate = `{
         },
         "commonresp.Ok": {
             "type": "object"
+        },
+        "gameresp.Event": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "type": "string"
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "time": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "gameresp.Events": {
+            "type": "object",
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/gameresp.Event"
+                    }
+                }
+            }
         },
         "gameresp.Players": {
             "type": "object",

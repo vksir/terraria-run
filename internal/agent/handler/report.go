@@ -121,6 +121,12 @@ func getEvents() []*Event {
 			Level:         "info",
 		},
 		{
+			// Loading world data: 1%
+			PatternString: `Loading world data: 1%`,
+			Format:        "正在加载世界",
+			Level:         "info",
+		},
+		{
 			// Server started
 			PatternString: `Server started`,
 			Format:        "服务器启动成功",

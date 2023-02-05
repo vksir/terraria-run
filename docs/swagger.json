@@ -238,6 +238,71 @@
                     }
                 }
             }
+        },
+        "/server_config": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server_config"
+                ],
+                "summary": "查看 Server Config",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/serverconfigresp.ServerConfig"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "server_config"
+                ],
+                "summary": "更新 Server Config",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/serverconfigreq.ServerConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Ok"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/commonresp.Err"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -310,6 +375,45 @@
                 }
             }
         },
+        "model.ServerConfig": {
+            "type": "object",
+            "properties": {
+                "auto_create": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "difficulty": {
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "max_players": {
+                    "type": "integer"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer",
+                    "maximum": 65535,
+                    "minimum": 1
+                },
+                "seed": {
+                    "type": "string"
+                },
+                "world_name": {
+                    "type": "string"
+                }
+            }
+        },
         "modreq.ModIds": {
             "type": "object",
             "properties": {
@@ -340,6 +444,22 @@
                     "items": {
                         "$ref": "#/definitions/model.Mod"
                     }
+                }
+            }
+        },
+        "serverconfigreq.ServerConfig": {
+            "type": "object",
+            "properties": {
+                "server_config": {
+                    "$ref": "#/definitions/model.ServerConfig"
+                }
+            }
+        },
+        "serverconfigresp.ServerConfig": {
+            "type": "object",
+            "properties": {
+                "server_config": {
+                    "$ref": "#/definitions/model.ServerConfig"
                 }
             }
         }

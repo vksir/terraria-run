@@ -44,6 +44,34 @@ definitions:
     - id
     - name
     type: object
+  model.ServerConfig:
+    properties:
+      auto_create:
+        enum:
+        - 1
+        - 2
+        - 3
+        type: integer
+      difficulty:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        type: integer
+      max_players:
+        type: integer
+      password:
+        type: string
+      port:
+        maximum: 65535
+        minimum: 1
+        type: integer
+      seed:
+        type: string
+      world_name:
+        type: string
+    type: object
   modreq.ModIds:
     properties:
       mod_ids:
@@ -64,6 +92,16 @@ definitions:
         items:
           $ref: '#/definitions/model.Mod'
         type: array
+    type: object
+  serverconfigreq.ServerConfig:
+    properties:
+      server_config:
+        $ref: '#/definitions/model.ServerConfig'
+    type: object
+  serverconfigresp.ServerConfig:
+    properties:
+      server_config:
+        $ref: '#/definitions/model.ServerConfig'
     type: object
 info:
   contact: {}
@@ -221,4 +259,46 @@ paths:
       summary: 更新 Mods
       tags:
       - mod
+  /server_config:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/serverconfigresp.ServerConfig'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/commonresp.Err'
+      summary: 查看 Server Config
+      tags:
+      - server_config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/serverconfigreq.ServerConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/commonresp.Ok'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/commonresp.Err'
+      summary: 更新 Server Config
+      tags:
+      - server_config
 swagger: "2.0"

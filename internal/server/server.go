@@ -6,6 +6,7 @@ import (
 	"terraria-run/internal/server/router/control"
 	"terraria-run/internal/server/router/game"
 	"terraria-run/internal/server/router/mod"
+	"terraria-run/internal/server/router/serverconfig"
 	"terraria-run/internal/server/swagger"
 )
 
@@ -27,4 +28,5 @@ func loadRouters(e *gin.Engine) {
 	mod.LoadRouters(publicGroup)
 	swagger.LoadRouters(publicGroup)
 	game.LoadRouters(publicGroup)
+	serverconfig.LoadRouters(publicGroup)
 }

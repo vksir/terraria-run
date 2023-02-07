@@ -50,10 +50,10 @@ func init() {
 }
 
 func setDefault() {
-	if _, err := os.Stat(constant.ConfigPath); os.IsExist(err) {
+	if f, _ := os.Stat(constant.ConfigPath); f != nil {
 		return
 	}
-	bytes, err := assets.FS.ReadFile("asserts/config.json")
+	bytes, err := assets.FS.ReadFile("assets/config.json")
 	if err != nil {
 		panic(err)
 	}

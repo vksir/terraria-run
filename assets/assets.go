@@ -4,5 +4,5 @@ import (
 	"embed"
 )
 
-//go:embed asserts/*
+//go:embed assets/*
 var FS embed.FS

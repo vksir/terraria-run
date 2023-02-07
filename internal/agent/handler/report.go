@@ -76,9 +76,6 @@ func (r *Report) Start(ctx context.Context) error {
 }
 
 func (r *Report) GetEvents() ([]*Event, error) {
-	if !r.Ready() {
-		return nil, fmt.Errorf("report is not ready, get events failed")
-	}
 	r.lock.Lock()
 	events := make([]*Event, len(r.events))
 	copy(events, r.events)

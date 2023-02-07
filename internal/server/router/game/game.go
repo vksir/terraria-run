@@ -52,7 +52,9 @@ func getEvents(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, commonresp.Err{Detail: err.Error()})
 		return
 	}
-	var respEvents gameresp.Events
+	respEvents := gameresp.Events{
+		Events: []gameresp.Event{},
+	}
 	for i := range events {
 		respEvents.Events = append(respEvents.Events, gameresp.Event{
 			Level: events[i].Level,

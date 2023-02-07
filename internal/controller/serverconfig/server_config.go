@@ -16,7 +16,7 @@ type Handler struct {
 }
 
 func NewHandler() *Handler {
-	bytes, err := assets.FS.ReadFile("asserts/serverconfig.txt")
+	bytes, err := assets.FS.ReadFile("assets/serverconfig.txt")
 	if err != nil {
 		panic(err)
 	}
